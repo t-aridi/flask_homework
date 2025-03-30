@@ -1,49 +1,31 @@
 from flask import Flask, render_template, request
 import plotly.express as px
 import pandas as pd
+import numpy as np
 import json
 import plotly
 
 app = Flask(__name__)
 
-
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Load the coffee export data from CSV
-    df = pd.read_csv("coffee_exports.csv")
-
-    # Get the selected chart type from the form (default is "box")
     chart_type = request.form.get("chart_type", "box")
 
-    # Choose a chart based on user selection
-    if chart_type == "bar":
-        fig = px.bar(
-            df,
-            x="Country",
-            y="Export_Value_USD",
-            color="Region",
-            title="Coffee Export Value by Country (USD)"
-        )
-    elif chart_type == "scatter":
-        fig = px.scatter(
-            df,
-            x="Export_Tons",
-            y="Export_Value_USD",
-            color="Region",
-            size="Export_Tons",
-            hover_name="Country",
-            title="Coffee Export Tons vs Value (USD)"
-        )
-    else:
-        fig = px.box(
-            df,
-            x="Region",
-            y="Export_Value_USD",
-            color="Region",
-            title="Coffee Export Value Distribution by Region"
-        )
+    # Generate random data
+    df = pd.read_csv("coffee_exports.csv")
 
-    # Apply a dark layout to the plot
+    # Select chart type
+    if chart_type == "bar":
+        fig = px.bar(df, x="Country", y="Export_Tons", color="Region",
+                     title="Coffee Exports (Tons) by Country")
+    elif chart_type == "scatter":
+        fig = px.scatter(df, x="Country", y="Export_Tons", color="Region",
+                         title="Coffee Exports (Tons) by Country")
+    else:
+        fig = px.box(df, x="Country", y="Export_Tons", color="Region",
+                     title="Distribution of Coffee Exports (Tons)")
+
+    # Dark layout
     fig.update_layout(
         plot_bgcolor='#1a1c23',
         paper_bgcolor='#1a1c23',
@@ -55,11 +37,8 @@ def index():
     fig.update_xaxes(showgrid=False, color='#cccccc')
     fig.update_yaxes(showgrid=False, color='#cccccc')
 
-    # Convert the Plotly figure to JSON for rendering in the template
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
     return render_template("index.html", graphJSON=graphJSON, chart_type=chart_type)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
